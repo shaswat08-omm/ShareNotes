@@ -605,6 +605,7 @@ footer {
     height: calc(100vh - 64px);
     background-color: var(--white);
     flex-direction: column;
+    justify-content: flex-start;
     padding: 2rem;
     transition: 0.3s;
     align-items: center;
