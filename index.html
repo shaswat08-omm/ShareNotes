@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Share Notes</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Hooks -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Header / Navigation -->
+    <header>
+        <nav>
+            <a href="index.html" class="logo">Share Notes</a>
+            <div class="hamburger">
+                <i class="fas fa-bars"></i>
+            </div>
+            <div class="nav-menu">
+                <div class="nav-links">
+                    <a href="index.html">Home</a>
+                    <a href="library.html">My Library</a>
+                    <a href="uploads.html">My Uploads</a>
+                    <a href="upload.html">Upload Materials</a>
+                </div>
+                <div class="nav-auth">
+                    <a href="login.html" class="btn btn-primary" id="authBtn">Login</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero container">
+        <h1>Grow Smarter Together</h1>
+        <p>Join thousands of students sharing knowledge, discovering quality study materials, and accelerating their learning journey through collaborative education.</p>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search for courses, documents, or study notes...">
+            <button class="btn btn-primary" id="searchBtn">Search</button>
+        </div>
+    </section>
+
+
+
+    <!-- Recent Shared Notes -->
+    <section class="shared-notes">
+        <div class="container">
+            <h2>Recent Shared Notes</h2>
+            <p class="section-subtitle">Explore notes uploaded by the community</p>
+            <div class="notes-grid" id="homepageNotesContainer">
+                <!-- Notes will be injected here by app.js -->
+            </div>
+        </div>
+    </section>
+
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Share Notes. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- App JS -->
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Material - Share Notes</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Hooks -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .view-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 80vh;
+        }
+        .view-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .view-title {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin: 0;
+        }
+        .view-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        .view-content {
+            flex: 1;
+            background-color: var(--bg-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .loading-state, .error-state {
+            text-align: center;
+            color: var(--text-light);
+        }
+        .error-state i {
+            font-size: 3rem;
+            color: #e53e3e;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header / Navigation -->
+    <header>
+        <nav>
+            <a href="index.html" class="logo">Share Notes</a>
+            <div class="hamburger">
+                <i class="fas fa-bars"></i>
+            </div>
+            <div class="nav-menu">
+                <div class="nav-links">
+                    <a href="index.html">Home</a>
+                    <a href="library.html">My Library</a>
+                    <a href="uploads.html">My Uploads</a>
+                    <a href="upload.html">Upload Materials</a>
+                </div>
+                <div class="nav-auth">
+                    <a href="login.html" class="btn btn-primary" id="authBtn">Login</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Document Viewer -->
+    <div class="container">
+        <div class="view-container">
+            <div class="view-header">
+                <div>
+                    <h2 class="view-title" id="viewTitle">Loading Document...</h2>
+                    <p id="viewAuthor" style="font-size: 0.9rem; margin-top: 0.25rem;">Please wait</p>
+                </div>
+                <div class="view-actions">
+                    <button class="btn btn-outline" onclick="window.history.back()">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                    <a href="#" id="downloadBtn" class="btn btn-primary" download>
+                        <i class="fas fa-download"></i> Download
+                    </a>
+                </div>
+            </div>
+            <div class="view-content" id="viewContent">
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin fa-3x"></i>
+                    <p style="margin-top: 1rem;">Preparing viewer...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- App JS -->
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const noteId = params.get('id');
+            const contentArea = document.getElementById('viewContent');
+            const titleEl = document.getElementById('viewTitle');
+            const authorEl = document.getElementById('viewAuthor');
+            const downloadBtn = document.getElementById('downloadBtn');
+
+            if (!noteId) {
+                contentArea.innerHTML = '<div class="error-state"><i class="fas fa-exclamation-triangle"></i><h2>Invalid Document Link</h2><p>No document ID was provided.</p></div>';
+                titleEl.textContent = 'Error';
+                return;
+            }
+
+            // Fetch note from Supabase
+            const { data: note, error } = await supabaseClient
+                .from('notes')
+                .select('*')
+                .eq('id', noteId)
+                .single();
+
+            if (error || !note) {
+                contentArea.innerHTML = '<div class="error-state"><i class="fas fa-file-excel"></i><h2>Document Not Found</h2><p>The requested document could not be found or has been removed.</p></div>';
+                titleEl.textContent = 'Not Found';
+                return;
+            }
+
+            titleEl.textContent = note.title;
+            authorEl.textContent = `Uploaded on ${new Date(note.date).toLocaleDateString()}`;
+
+            if (note.file_url) {
+                const isPdf = note.file_url.startsWith('data:application/pdf');
+                const isImage = note.file_url.startsWith('data:image/');
+                
+                downloadBtn.href = note.file_url;
+                downloadBtn.download = `ShareNotes_${note.title}`;
+
+                if (isPdf) {
+                    contentArea.innerHTML = `<iframe src="${note.file_url}#toolbar=0" title="${note.title}"></iframe>`;
+                } else if (isImage) {
+                    contentArea.innerHTML = `<img src="${note.file_url}" alt="${note.title}" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+                } else {
+                    contentArea.innerHTML = `
+                        <div class="error-state" style="color: var(--text-dark);">
+                            <i class="fas fa-file-alt" style="color: var(--primary-color);"></i>
+                            <h2>Preview Not Available</h2>
+                            <p>This file type cannot be previewed in the browser directly.</p>
+                            <p style="margin-top: 1rem;">Please use the <strong>Download</strong> button to open it locally.</p>
+                        </div>
+                    `;
+                }
+            } else {
+                 contentArea.innerHTML = `
+                        <div class="error-state" style="color: var(--text-dark);">
+                            <i class="fas fa-unlink" style="color: var(--primary-color);"></i>
+                            <h2>No File Content</h2>
+                            <p>This note was created without attached file data.</p>
+                        </div>
+                    `;
+                 downloadBtn.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

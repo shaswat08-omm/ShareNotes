@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Share Notes</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Hooks -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Header / Navigation -->
+    <header>
+        <nav>
+            <a href="index.html" class="logo">Share Notes</a>
+            <div class="hamburger">
+                <i class="fas fa-bars"></i>
+            </div>
+            <div class="nav-menu">
+                <div class="nav-links">
+                    <a href="index.html">Home</a>
+                    <a href="library.html">My Library</a>
+                    <a href="uploads.html">My Uploads</a>
+                    <a href="upload.html">Upload Materials</a>
+                </div>
+                <div class="nav-auth">
+                    <a href="login.html" class="btn btn-primary" id="authBtn">Login</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <h1>Welcome Back</h1>
+            <p>Sign in to access your library and upload new materials.</p>
+        </div>
+    </div>
+
+    <!-- Login / Signup Form Section -->
+    <section class="container" style="min-height: 50vh;">
+        <div class="form-container" style="max-width: 450px;">
+            <form id="authForm">
+                <input type="hidden" id="authMode" value="login">
+                
+                <div class="form-group" id="nameGroup" style="display: none;">
+                    <label for="fullName">Full Name</label>
+                    <input type="text" id="fullName" class="form-control" placeholder="John Doe">
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" class="form-control" placeholder="you@example.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+                </div>
+                
+                <button type="submit" id="authSubmitBtn" class="btn btn-primary form-submit">Sign In</button>
+                
+                <p id="authToggleText" style="text-align: center; margin-top: 1.5rem; color: var(--text-light); font-size: 0.9rem;">
+                    Don't have an account? <a href="#" id="toggleAuthModeBtn" style="color: var(--primary-color); font-weight: 500;">Sign up</a>
+                </p>
+                <div id="authErrorMsg" style="color: #e53e3e; text-align: center; margin-top: 1rem; font-size: 0.9rem; display: none;"></div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Share Notes. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- App JS -->
+    <script src="app.js"></script>
+</body>
+</html>
