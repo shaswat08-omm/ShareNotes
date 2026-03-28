@@ -103,9 +103,10 @@ function setupHamburger() {
 // Helper: Fetch all notes from Supabase
 // ==========================================
 async function fetchAllNotes() {
+    // Intentionally exclude file_url — it stores huge base64/URL data not needed for card display
     const { data, error } = await supabaseClient
         .from('notes')
-        .select('*')
+        .select('id, title, description, author_id, date')
         .order('date', { ascending: false });
     if (error) {
         console.error('Error fetching notes:', error.message);
@@ -118,9 +119,10 @@ async function fetchAllNotes() {
 // Helper: Fetch a single note by ID
 // ==========================================
 async function fetchNoteById(noteId) {
+    // Only fetch metadata (no file_url) — used for edit/delete operations on cards
     const { data, error } = await supabaseClient
         .from('notes')
-        .select('*')
+        .select('id, title, description, author_id, date')
         .eq('id', noteId)
         .single();
     if (error) {
@@ -418,7 +420,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             const { data: savedNotes } = await supabaseClient
                 .from('notes')
-                .select('*')
+                .select('id, title, description, author_id, date')
                 .in('id', savedIds)
                 .order('date', { ascending: false });
             
@@ -449,7 +451,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const { data: myNotes, error: myError } = await supabaseClient
             .from('notes')
-            .select('*')
+            .select('id, title, description, author_id, date')
             .eq('author_id', currentUser.id)
             .order('date', { ascending: false });
         
@@ -495,40 +497,64 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             
             const file = fileInput.files[0];
-            const reader = new FileReader();
 
             const submitBtn = uploadForm.querySelector('button[type="submit"]');
             const originalText = submitBtn.textContent;
             submitBtn.textContent = 'Uploading...';
             submitBtn.disabled = true;
 
-            reader.onload = async function(event) {
-                const fileDataUrl = event.target.result;
-
+            try {
                 // Refresh token before write operation
                 const sessionOk = await ensureFreshSession();
                 if (!sessionOk) return;
 
-                const { error } = await supabaseClient
+                // Upload file to Supabase Storage (instead of storing base64 in DB)
+                const fileExt = file.name.split('.').pop();
+                const filePath = `${currentUser.id}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+
+                const { data: storageData, error: storageError } = await supabaseClient
+                    .storage
+                    .from('note-files')
+                    .upload(filePath, file, { upsert: false });
+
+                if (storageError) {
+                    alert("Failed to upload file: " + storageError.message);
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                    return;
+                }
+
+                // Get the public URL for the uploaded file
+                const { data: urlData } = supabaseClient
+                    .storage
+                    .from('note-files')
+                    .getPublicUrl(storageData.path);
+
+                const publicUrl = urlData.publicUrl;
+
+                // Save note metadata + storage URL to the database
+                const { error: dbError } = await supabaseClient
                     .from('notes')
                     .insert([{
                         title: title,
                         description: desc,
                         author_id: currentUser.id,
-                        file_url: fileDataUrl
+                        file_url: publicUrl
                     }]);
                 
-                if (error) {
-                    alert("Failed to save note: " + error.message);
+                if (dbError) {
+                    alert("Failed to save note: " + dbError.message);
                     submitBtn.textContent = originalText;
                     submitBtn.disabled = false;
                 } else {
                     alert("Note uploaded successfully!");
                     window.location.href = 'index.html';
                 }
-            };
-            
-            reader.readAsDataURL(file);
+            } catch (err) {
+                alert("Unexpected error: " + err.message);
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
         });
     }
     

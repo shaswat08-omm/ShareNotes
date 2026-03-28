@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,6 +25,7 @@
             flex-direction: column;
             height: 80vh;
         }
+
         .view-header {
             padding: 1.5rem 2rem;
             border-bottom: 1px solid var(--border-color);
@@ -31,15 +33,18 @@
             justify-content: space-between;
             align-items: center;
         }
+
         .view-title {
             font-size: 1.5rem;
             color: var(--primary-color);
             margin: 0;
         }
+
         .view-actions {
             display: flex;
             gap: 1rem;
         }
+
         .view-content {
             flex: 1;
             background-color: var(--bg-light);
@@ -48,38 +53,47 @@
             justify-content: center;
             position: relative;
         }
+
         iframe {
             width: 100%;
             height: 100%;
             border: none;
         }
-        .loading-state, .error-state {
+
+        .loading-state,
+        .error-state {
             text-align: center;
             color: var(--text-light);
         }
+
         .error-state i {
             font-size: 3rem;
             color: #e53e3e;
             margin-bottom: 1rem;
         }
+
         @media (max-width: 768px) {
             .view-container {
                 margin: 1rem auto;
                 height: 75vh;
                 border-radius: 0;
             }
+
             .view-header {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 1rem;
                 padding: 1rem 1.25rem;
             }
+
             .view-title {
                 font-size: 1.15rem;
             }
+
             .view-actions {
                 width: 100%;
             }
+
             .view-actions .btn {
                 flex: 1;
                 text-align: center;
@@ -89,6 +103,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <!-- Header / Navigation -->
@@ -157,10 +172,10 @@
                 return;
             }
 
-            // Fetch note from Supabase
+            // Fetch note from Supabase — include file_url only here (view page), not on list pages
             const { data: note, error } = await supabaseClient
                 .from('notes')
-                .select('*')
+                .select('id, title, description, author_id, date, file_url')
                 .eq('id', noteId)
                 .single();
 
@@ -174,14 +189,30 @@
             authorEl.textContent = `Uploaded on ${new Date(note.date).toLocaleDateString()}`;
 
             if (note.file_url) {
-                const isPdf = note.file_url.startsWith('data:application/pdf');
-                const isImage = note.file_url.startsWith('data:image/');
-                
+                const isBase64 = note.file_url.startsWith('data:');
+                const isPdf = note.file_url.startsWith('data:application/pdf') || note.file_url.toLowerCase().includes('.pdf');
+                const isImage = note.file_url.startsWith('data:image/') || /\.(png|jpe?g|gif|webp)$/i.test(note.file_url);
+
                 downloadBtn.href = note.file_url;
                 downloadBtn.download = `ShareNotes_${note.title}`;
 
                 if (isPdf) {
-                    contentArea.innerHTML = `<iframe src="${note.file_url}#toolbar=0" title="${note.title}"></iframe>`;
+                    if (isBase64) {
+                        // Legacy base64 PDF — large files cannot render in iframe reliably
+                        // Use object tag with a graceful fallback to download
+                        contentArea.innerHTML = `
+                            <object data="${note.file_url}" type="application/pdf" width="100%" height="100%" style="height:100%;width:100%;">
+                                <div class="error-state" style="color: var(--text-dark); padding: 2rem;">
+                                    <i class="fas fa-file-pdf" style="color: var(--primary-color);"></i>
+                                    <h2>PDF Preview Unavailable</h2>
+                                    <p>Your browser couldn't display this PDF inline (it may be very large).</p>
+                                    <p style="margin-top: 1rem;">Please use the <strong>Download</strong> button above to open it.</p>
+                                </div>
+                            </object>`;
+                    } else {
+                        // Modern Supabase Storage URL — renders reliably in iframe
+                        contentArea.innerHTML = `<iframe src="${note.file_url}" title="${note.title}"></iframe>`;
+                    }
                 } else if (isImage) {
                     contentArea.innerHTML = `<img src="${note.file_url}" alt="${note.title}" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
                 } else {
@@ -195,16 +226,17 @@
                     `;
                 }
             } else {
-                 contentArea.innerHTML = `
+                contentArea.innerHTML = `
                         <div class="error-state" style="color: var(--text-dark);">
                             <i class="fas fa-unlink" style="color: var(--primary-color);"></i>
                             <h2>No File Content</h2>
                             <p>This note was created without attached file data.</p>
                         </div>
                     `;
-                 downloadBtn.style.display = 'none';
+                downloadBtn.style.display = 'none';
             }
         });
     </script>
 </body>
+
 </html>
